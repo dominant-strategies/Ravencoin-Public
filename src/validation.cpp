@@ -5790,9 +5790,15 @@ void SetEnforcedValues(bool value) {
     fEnforcedValuesIsActive = value;
 }
 
+// Only used by test framework
 void SetEnforcedCoinbase(bool value)
 {
     fCheckCoinbaseAssetsIsActive = value;
+}
+
+// Only used by test framework
+void SetTransferOverflow(bool value) {
+    fCheckTransferOverflowIsActive = value;
 }
 
 bool AreEnforcedValuesDeployed()
@@ -5885,6 +5891,18 @@ bool IsRestrictedActive(unsigned int nBlockNumber)
     } else {
         return AreRestrictedAssetsDeployed();
     }
+}
+
+bool IsTransferOverflowCheckDeployed()
+{
+    if (fCheckTransferOverflowIsActive)
+        return true;
+
+    const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_TRANSFER_OVERFLOW);
+    if (thresholdState == THRESHOLD_ACTIVE)
+        fCheckTransferOverflowIsActive = true;
+
+    return fCheckTransferOverflowIsActive;
 }
 
 CAssetsCache* GetCurrentAssetCache()
