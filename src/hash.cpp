@@ -12,6 +12,8 @@
 
 #include <crypto/ethash/include/ethash/progpow.hpp>
 
+#include <mutex>
+
 //TODO remove these
 double algoHashTotal[16];
 int algoHashHits[16];
@@ -257,10 +259,19 @@ uint64_t SipHashUint256Extra(uint64_t k0, uint64_t k1, const uint256& val, uint3
 
 uint256 KAWPOWHash(const CBlockHeader& blockHeader, uint256& mix_hash)
 {
+    // The epoch context is shared by every thread that verifies a KAWPOW proof (block and
+    // header validation, and any RPC that validates or submits a block). It is a unique_ptr,
+    // so reassigning it on an epoch change frees the previous context; without
+    // synchronization one thread can free it while another is dereferencing it inside
+    // progpow::hash(), which is a use-after-free (observed as a SIGSEGV in a core dump on a
+    // node whose RPC workers submit blocks concurrently with normal validation).
+    static std::mutex context_mutex;
     static ethash::epoch_context_ptr context{nullptr, nullptr};
 
     // Get the context from the block height
     const auto epoch_number = ethash::get_epoch_number(blockHeader.nHeight);
+
+    std::lock_guard<std::mutex> lock(context_mutex);
 
     if (!context || context->epoch_number != epoch_number)
         context = ethash::create_epoch_context(epoch_number);
