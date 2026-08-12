@@ -611,6 +611,9 @@ bool IsRip5Active();
 
 bool AreTransferScriptsSizeDeployed();
 
+//! Check if the pay-to-asset-hash (P2AH) deployment is active
+bool AreAssetAuthDeployed();
+
 bool IsDGWActive(unsigned int nBlockNumber);
 bool IsMessagingActive(unsigned int nBlockNumber);
 bool IsRestrictedActive(unsigned int nBlockNumber);
